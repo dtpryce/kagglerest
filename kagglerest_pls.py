@@ -4,17 +4,12 @@ Created on Tue Mar 24 13:56:08 2015
 
 @author: dpryce
 """
- 
-print(__doc__)
 
-from sklearn.svm import SVR
-import matplotlib.pyplot as plt
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier 
-from sklearn.linear_model import ElasticNet
+import numpy as np 
+from sklearn.cross_decomposition import PLSRegression
 import csv
 
 '''DATA CHECKS'''
@@ -123,41 +118,25 @@ x = np.delete(train_data,37,1)
 revenue = train_data[:,37]
 
 '''TRAINING'''
-# Create the random forest object which will include all the parameters
-# for the fit
-forest = RandomForestClassifier(n_estimators = 100)
-forest.__init__(oob_score=True)
-# Fit the training data to the revenue and create the decision trees
-forest = forest.fit(x,revenue)
+'''Set up Partial Least Squares Regression'''
+pls = PLSRegression(n_components=25)
 
-#prints the oob score -- I think
-#print forest.score(x,revenue)
-
-#Compare elastic net and random forest
-SVM = ElasticNet(alpha = .05,normalize=True)
-RF = RandomForestClassifier(n_estimators = 50)
-y_rbf = RF.fit(x, revenue).predict(x)
-plt.scatter(x[:,1], revenue, c='k', label='data')
-plt.plot(x[:,7], y_rbf, c='b', label='RBF model')
-plt.title('Support Vector Regression')
-plt.legend()
-plt.show()
+'''Fit model'''
+pls = pls.fit(x, revenue)
 
 
 '''TESTING'''
-## Take the same decision trees and run it on the test data
-#output = forest.predict(test_data)
+'''Predict and score'''
+#Apply Partial least squares regressor to test data
+prediction = pls.predict(test_data)
+
+
+''' PRINT TO FILE'''
+predictions_file = open("restaurants_pls.csv", "wb")
+p = csv.writer(predictions_file)
+p.writerow(["Id", "Prediction"])
+
+for i in range(0,len(prediction)):
+    p.writerow([i, prediction[i,0]])
     
-
-
-
-   
-#''' PRINT TO FILE'''
-#predictions_file = open("restaurants_rf.csv", "wb")
-#p = csv.writer(predictions_file)
-#p.writerow(["Id", "Prediction"])
-#
-#for i in range(0,len(output)):
-#    p.writerow([i, output[i]])
-#
-#predictions_file.close()
+predictions_file.close()

@@ -4,17 +4,12 @@ Created on Tue Mar 24 13:56:08 2015
 
 @author: dpryce
 """
- 
-print(__doc__)
 
-from sklearn.svm import SVR
-import matplotlib.pyplot as plt
 import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier 
-from sklearn.linear_model import ElasticNet
+from sklearn.ensemble import RandomForestRegressor 
 import csv
 
 '''DATA CHECKS'''
@@ -108,7 +103,7 @@ def munge_rest(df):
     return data
 
 #change below for your local file directory 
-os.chdir('C:\Users\dpryce\Documents\DataAnalytics\Kaggle - restaurant')
+os.chdir('C:\Users\ssbizzera\Documents\Data Analytics\Kaggle\Restaurant')
 
 '''DATA INPUT'''
 #input training data into initial pandas dataframe
@@ -117,47 +112,33 @@ test_df = pd.read_csv('test.csv',sep=",")
     
 train_data = munge_rest(train_df)
 test_data = munge_rest(test_df)    
-    
+
 #Delete revenue column from train data
 x = np.delete(train_data,37,1)
-revenue = train_data[:,37]
 
 '''TRAINING'''
 # Create the random forest object which will include all the parameters
 # for the fit
-forest = RandomForestClassifier(n_estimators = 100)
+forest = RandomForestRegressor(n_estimators = 100,max_depth=None,max_features='sqrt',min_samples_split= 3)
 forest.__init__(oob_score=True)
 # Fit the training data to the revenue and create the decision trees
-forest = forest.fit(x,revenue)
+forest = forest.fit(x,train_data[0::,37])
 
 #prints the oob score -- I think
-#print forest.score(x,revenue)
-
-#Compare elastic net and random forest
-SVM = ElasticNet(alpha = .05,normalize=True)
-RF = RandomForestClassifier(n_estimators = 50)
-y_rbf = RF.fit(x, revenue).predict(x)
-plt.scatter(x[:,1], revenue, c='k', label='data')
-plt.plot(x[:,7], y_rbf, c='b', label='RBF model')
-plt.title('Support Vector Regression')
-plt.legend()
-plt.show()
-
+#print forest.score(train_data[0::,1::],train_data[0::,37])
 
 '''TESTING'''
 ## Take the same decision trees and run it on the test data
-#output = forest.predict(test_data)
+output = forest.predict(test_data)
     
+    
+''' PRINT TO FILE'''
+predictions_file = open("restaurants_rf.csv", "wb")
+p = csv.writer(predictions_file)
+p.writerow(["Id", "Prediction"])
 
+for i in range(0,len(output)):
+    p.writerow([i, output[i]])
 
+predictions_file.close()
 
-   
-#''' PRINT TO FILE'''
-#predictions_file = open("restaurants_rf.csv", "wb")
-#p = csv.writer(predictions_file)
-#p.writerow(["Id", "Prediction"])
-#
-#for i in range(0,len(output)):
-#    p.writerow([i, output[i]])
-#
-#predictions_file.close()
