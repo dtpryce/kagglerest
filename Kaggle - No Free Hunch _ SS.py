@@ -116,6 +116,9 @@ test_data = munge_rest(test_df)
 #Delete revenue column from train data
 x = np.delete(train_data,37,1)
 
+#Define revenue as target variable 
+revenue = train_data[:,37]
+
 '''TRAINING'''
 # Create the random forest object which will include all the parameters
 # for the fit
@@ -124,13 +127,20 @@ forest.__init__(oob_score=True)
 # Fit the training data to the revenue and create the decision trees
 forest = forest.fit(x,train_data[0::,37])
 
+# Try the Ridge Regression model
+clf = linear_model.Ridge(alpha=0.75, fit_intercept=True, normalize=True, copy_X=True, max_iter=1000, tol=0.015)
+#Fit the training data to the revenue and create the Ridge regression model
+Ridge = clf.fit(x,train_data[0::,37])
+
 #prints the oob score -- I think
 #print forest.score(train_data[0::,1::],train_data[0::,37])
 
 '''TESTING'''
 ## Take the same decision trees and run it on the test data
 output = forest.predict(test_data)
-    
+
+# Take the ridge regression and predict on test data
+output_Ridge = Ridge.predict(test_data)
     
 ''' PRINT TO FILE'''
 predictions_file = open("restaurants_rf.csv", "wb")
